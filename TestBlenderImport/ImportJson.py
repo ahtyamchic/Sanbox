@@ -88,14 +88,17 @@ def create_materials(data):
         diffuseColor = m.get("diffuseColor", None)    # ok
         diffuseMap = m.get("diffuseMap", None)        # ok 
         ambientColor = m.get("ambientColor", None)    # ok        
+        
         specularColor = m.get("specularColor", None)  # ok 
         specularMap = m.get("specularMap", None)  #TODO ???
+        
         shininess = m.get("shininess", 0.0)       # TODO probably is specular_intensity
         alpha = m.get("transparency", 1.0)        # ok 
-        #TODO????? 
-        reflectivity = m.get("reflectivity", 0)   # TODO
+        reflectivity = m.get("reflectivity", 0)   # ok??
+        
         bumpMap = m.get("bumpMap", None)          # TODO
-        bumpScale = m.get("bumpScale", 1)        
+        bumpScale = m.get("bumpScale", 1)
+         
         emissive = m.get("emissive", 0) # TODO not sure  
         
         """TODO what is it?"""  
@@ -108,8 +111,9 @@ def create_materials(data):
             setColor(material.diffuse_color, diffuseColor)
         
         """I am not sure of the this """
-#         if reflectivity < 1.0:
-#             material.diffuse_intensity = reflectivity 
+        if reflectivity < 1.0:
+            material.raytrace_mirror.use = True
+            material.raytrace_mirror.reflect_factor = reflectivity 
 
         if specularColor:
             setColor(material.specular_color, specularColor)
@@ -150,7 +154,7 @@ def update_mesh_object(mesh):
         print("TEST before update me.tessfaces len", len(mesh.tessfaces))
         #mesh.update(calc_tessface = True)
         #mesh.update(calc_edges= True)
-        mesh.update(calc_edges= False, calc_tessface = False)
+        mesh.update(calc_edges= True, calc_tessface = False)
         print("TEST me.tessfaces len", len(mesh.tessfaces))
         
 def create_mesh_object(name, vertices, materials, face_data, flipYZ, recalculate_normals, matrix, parrent):
