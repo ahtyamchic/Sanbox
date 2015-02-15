@@ -432,7 +432,7 @@ def extract_faces(data, material_index):
     return result
 
 # #####################################################
-# Camera
+# Camera 
 # #####################################################
 """
     "camera":
