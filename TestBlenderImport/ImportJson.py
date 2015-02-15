@@ -43,12 +43,6 @@ def load_remote_image(url):
     return img
     
 def setColor(c, cInHex):
-    #bit32_to_bytes = lambda x: [255 & (x >> 8 * i) for i in (0,1,2,3)]
-    #ri = 2
-    #gi = 1
-    #bi = 0
-    
-    #rgbArr = bit32_to_bytes(cInHex)
     rgbArr = hexToTuple(cInHex)
     c.r = rgbArr[0]
     c.g = rgbArr[1]
@@ -177,8 +171,7 @@ def create_mesh_object(name, vertices, materials, face_data, flipYZ, recalculate
         ob = bpy.data.objects.new(name, me)
         ob.data = me  
     
-    ob.matrix_world = matrix  
-    #me.transform(matrix, shape_keys = True)
+    ob.matrix_world = matrix
     scene = bpy.context.scene                   # get the current scene
     scene.objects.link(ob)
     #scene.update()    
