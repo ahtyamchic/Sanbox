@@ -24,11 +24,14 @@ from urllib import request
 # Generators
 # #####################################################
 
+def get_name_from_url(url, path_base):
+    return path_base + url.split('/')[-1]
+
 def load_remote_image(url):
     # Load image file from url.    
     try:
         #make a temp filename that is valid on your machine
-        path_base ="C:/test/tmp/"
+        path_base = setting_default_temp_dir()
         tmp_filename = path_base + url.split('/')[-1]
         #fetch the image in this file
         request.urlretrieve(url, tmp_filename)
@@ -66,6 +69,13 @@ def create_texture(textureName, data, isLocalImage = True):
         raise NameError("Cannot load texture data %s" % textureName)
     
     imageRealPathOrUrl = texture_data.get("url", "")
+    if not isLocalImage:
+        filePath = get_name_from_url(imageRealPathOrUrl, setting_default_temp_dir())
+        isDownloaded = os.path.isfile(filePath)
+        if isDownloaded:
+            isLocalImage = True
+            imageRealPathOrUrl = filePath
+    
     image = load_image (imageRealPathOrUrl) if isLocalImage else load_remote_image(imageRealPathOrUrl)
 
     if not image:
@@ -84,7 +94,7 @@ def create_materials(data):
     for i, m in enumerate(materials_data):
 
         name = m.get("DbgName", "material_%d" % i)
-        
+        ### Parse data ###
         diffuseColor = m.get("diffuseColor", None)    # ok
         diffuseMap = m.get("diffuseMap", None)        # ok 
         ambientColor = m.get("ambientColor", None)    # ok        
@@ -96,31 +106,20 @@ def create_materials(data):
         alpha = m.get("transparency", 1.0)        # ok 
         reflectivity = m.get("reflectivity", 0)   # ok??
         
-        bumpMap = m.get("bumpMap", None)          # TODO
-        bumpScale = m.get("bumpScale", 1)
+        bumpMap = m.get("bumpMap", None)
+        bumpScale = m.get("bumpScale", 1)          # TODO: ???
          
         emissive = m.get("emissive", 0) # TODO not sure  
         
-        """TODO what is it?"""  
-        specular_hardness = 0  
-
         material = bpy.data.materials.new(name)
-
-        material.use_vertex_color_light = False
-        if diffuseColor:
-            setColor(material.diffuse_color, diffuseColor)
+        material.use_vertex_color_light = False       
+        
+        ### Parse data ###
         
         """I am not sure of the this """
         if reflectivity < 1.0:
             material.raytrace_mirror.use = True
             material.raytrace_mirror.reflect_factor = reflectivity 
-
-        if specularColor:
-            setColor(material.specular_color, specularColor)
-            
-        """I am not sure of the this """
-        if shininess >= 0 and shininess <= 100:            
-            material.specular_intensity = shininess / 100.0
             
         if ambientColor < 1.0:
             material.ambient = ambientColor
@@ -128,19 +127,53 @@ def create_materials(data):
         if alpha < 1.0:
             material.alpha = alpha
             material.use_transparency = True
-
-        if specular_hardness:
-            material.specular_hardness = specular_hardness
-
+           
+        """I am not sure of the this """
+        if shininess:            
+            material.specular_hardness = shininess
+        
+        if bumpMap:
+            material.specular_shader = 'BLINN'
+            texture = create_texture(bumpMap, data, False)
+            mtex = material.texture_slots.add()
+            mtex.texture = texture
+            mtex.texture_coords = 'UV'
+            mtex.use = True
+            mtex.bump_method = 'BUMP_BEST_QUALITY'
+            mtex.bump_objectspace = 'BUMP_TEXTURESPACE'
+            mtex.mapping = 'FLAT' #????  
+        
+        if specularColor:
+            setColor(material.specular_color, specularColor)
+            material.specular_intensity = 1.0 
+            material.specular_shader = 'COOKTORR'    
+        
+        if specularMap:
+            material.specular_shader = 'PHONG'
+            texture = create_texture(specularMap, data, False)
+            mtex = material.texture_slots.add()
+            mtex.texture = texture
+            mtex.texture_coords = 'UV'
+            mtex.use = True
+            
+            mtex.mapping = 'FLAT'        
+            mtex.use_map_specular = True               
+            
+        if diffuseColor:
+            setColor(material.diffuse_color, diffuseColor)
         if diffuseMap:
+            material.diffuse_shader = 'LAMBERT'
             texture = create_texture(diffuseMap, data, False)
             mtex = material.texture_slots.add()
             mtex.texture = texture
             mtex.texture_coords = 'UV'
             mtex.use = True
             mtex.use_map_color_diffuse = True
+            mtex.mapping = 'FLAT'        
+            mtex.use_map_diffuse = True
+            
+            #material.active_texture = texture
 
-            material.active_texture = texture
         
         """I am not sure of the this """
         if emissive < 1.0:
@@ -154,7 +187,7 @@ def update_mesh_object(mesh):
         print("TEST before update me.tessfaces len", len(mesh.tessfaces))
         #mesh.update(calc_tessface = True)
         #mesh.update(calc_edges= True)
-        mesh.update(calc_edges= True, calc_tessface = False)
+        mesh.update(calc_edges= False, calc_tessface = True)
         print("TEST me.tessfaces len", len(mesh.tessfaces))
         
 def create_mesh_object(name, vertices, materials, face_data, flipYZ, recalculate_normals, matrix, parrent):
@@ -182,10 +215,6 @@ def create_mesh_object(name, vertices, materials, face_data, flipYZ, recalculate
     
     if parrent:
         ob.parent = parrent
-        #bpy.context.scene.objects.active = parrent    
-        #ob.select = True # select  object
-        #ob.select = True
-        #bpy.ops.object.parent_set( type = 'OBJECT', xmirror = False, keep_transform = True )
     
     me.vertices.add(len(vertices))
     me.tessfaces.add(len(faces))
@@ -295,15 +324,28 @@ def create_mesh_object(name, vertices, materials, face_data, flipYZ, recalculate
     if face_data["hasMaterials"]:
         print("setting materials (mesh)")
 
-        for m in materials:
-            me.materials.append(m)
-
+#         for m in materials:
+#             me.materials.append(m)
+        addedMaterials = {}
+        currentIndex = -1
+        
         print("setting materials (faces)")
 
         for fi in range(len(faces)):
             if faceMaterials[fi] >= 0:
-                print("TEST MATERIALS index %r" % (faceMaterials[fi]))                
-                me.tessfaces[fi].material_index = faceMaterials[fi]
+                print("TEST MATERIALS index %r" % (faceMaterials[fi])) 
+                face_index = faceMaterials[fi]               
+                
+                material_index = -1
+                if not face_index in addedMaterials:
+                    me.materials.append(materials[face_index])
+                    currentIndex = currentIndex + 1
+                    material_index = currentIndex                    
+                    addedMaterials[face_index] = currentIndex
+                else:
+                    material_index = addedMaterials[face_index]
+                            
+                me.tessfaces[fi].material_index = material_index
                 
     # Create a new object
     
@@ -476,13 +518,16 @@ def add_camera(camera_data, parent):
 
     cam = bpy.data.cameras.new("Camera")
     
-    cam.type = 'PERSP'
+    cam.type = 'PERSP'    
+    cam.angle =convert_degrees_to_rad(fieldOfViewInDegrees)
+    
     cam.lens_unit = 'FOV'
-    cam.lens = fieldOfViewInDegrees
+    cam['Ratio'] = aspectRatio #  does not work probably
+    
+    print("TEST CAMERA FOV %r" % (fieldOfViewInDegrees))
     cam.clip_start = nearClipDistance
     cam.clip_end = farClipDistance
-    cam["Ratio"] = aspectRatio
-     
+    cam.show_sensor = True
     
     cam_ob = bpy.data.objects.new("Camera", cam)
     cam_ob.data = cam    
@@ -492,9 +537,27 @@ def add_camera(camera_data, parent):
     
     bpy.context.scene.objects.link(cam_ob)
     
+def add_some_lamp():
+    b_lamp1 = bpy.data.lamps.new('lamp1', type='POINT')
+    b_lamp1.energy = 18
+    b_lamp1.distance = 25
+    lamp_object = bpy.data.objects.new(name="lamp", object_data=b_lamp1)
+    lamp_object.location = (3.55275, -29.70471, 23.00502)
+    
+    b_lamp2 = bpy.data.lamps.new('lamp2', type='POINT')
+    b_lamp2.energy = 18
+    b_lamp2.distance = 25
+    lamp_object2 = bpy.data.objects.new(name="lamp", object_data=b_lamp2)
+    lamp_object2.location = (28.89529, -29.42309, 20.58965)
+    bpy.context.scene.objects.link(lamp_object)
+    bpy.context.scene.objects.link(lamp_object2)
+    
 # #####################################################
 # Utils
 # #####################################################
+
+def convert_degrees_to_rad( degrees ):
+    return math.pi * degrees / 180.0
 
 def hexToTuple( hexColor ):
     r = (( hexColor >> 16 ) & 0xff) / 255.0
@@ -543,6 +606,9 @@ def get_path(filepath):
 """
 Default Settings
 """
+def setting_default_temp_dir():
+    return "C:/test/tmp/"
+
 def setting_target_rotation():
     return [-90, 0, 0]
 
@@ -589,9 +655,8 @@ def load_data(data,  option_flip_yz, recalculate_normals, option_worker):
     root_me = create_mesh_object('root', [], [], empty_root_faces, option_flip_yz, False, root_matrix, None)
     apply_default_transform(root_me)
     
-    # Add camera
     add_camera(camera_data, root_me)
-    # Create materials
+
     print("\n\tloading materials...")
     materials = create_materials(data)
 
@@ -683,6 +748,8 @@ def load(operator, context, filepath, option_flip_yz = False, recalculate_normal
 
     load_data(data, option_flip_yz, recalculate_normals, option_worker)
     
+    add_some_lamp()
+    
     scene = bpy.context.scene
     scene.update()
 
@@ -696,6 +763,6 @@ if __name__ == "__main__":
     #register()
     print('Started...')
     #load(None, None, "C:/test/CubColTest.json")
-    load(None, None, "C:/test/Json.json")
+    load(None, None, "C:/test/Demo.json")
     #load(None, None, "C:/test/Cubic.json")
     print('Finished')
