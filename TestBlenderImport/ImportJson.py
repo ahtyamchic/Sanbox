@@ -3,11 +3,12 @@ Created on 03 февр. 2015 г.
 
 @author: Mihail
 '''
+from argparse import ArgumentError
 
 """
-Blender importer for Three.js (ASCII JSON format).
+Blender importer
 """
-
+import sys
 import os
 import time
 import json
@@ -600,14 +601,32 @@ def get_name(filepath):
 def get_path(filepath):
     return os.path.dirname(filepath)
 
+def get_args():
+    print()
+    print(sys.argv)
+    print()
+    
+    try:
+        args = list(reversed(sys.argv))
+        idx = args.index("--")
+    
+    except ValueError:
+        params = []
+    
+    else:
+        params = args[:idx][::-1]
+
+    print("Script params:", params)
+    return params
 # #####################################################
 # Parser
 # #####################################################
 """
 Default Settings
 """
+SettingTempDirectory = None
 def setting_default_temp_dir():
-    return "C:/test/tmp/"
+    return SettingTempDirectory == "C:/test/tmp/" if SettingTempDirectory == 'None' else SettingTempDirectory
 
 def setting_target_rotation():
     return [-90, 0, 0]
@@ -719,7 +738,7 @@ def load_data(data,  option_flip_yz, recalculate_normals, option_worker):
     
     
     
-def load(operator, context, filepath, option_flip_yz = False, recalculate_normals = True, option_worker = False):
+def load(operator, context, filepath, option_flip_yz = False, recalculate_normals = False, option_worker = False):
 
     print('\nimporting %r' % filepath)
 
@@ -760,9 +779,24 @@ def load(operator, context, filepath, option_flip_yz = False, recalculate_normal
 
 
 if __name__ == "__main__":
-    #register()
     print('Started...')
-    #load(None, None, "C:/test/CubColTest.json")
-    load(None, None, "C:/test/Demo.json")
-    #load(None, None, "C:/test/Cubic.json")
+    
+    cmdArgs = get_args()
+    if len(cmdArgs) < 1:
+        raise ArgumentError('argv', "No console parameters. Please pass a file path with json and temp directory for images saving.")
+    
+    fileWithJson = cmdArgs[0]
+    if len(cmdArgs) > 1:
+        tempDirectory = cmdArgs[1]
+    else: 
+        tempDirectory = "C:/BlenderImportTemp/"
+    
+    if not os.path.exists(fileWithJson):
+        raise ArgumentError("fileWithJson", "Given file with json does not exist.")
+    if not os.path.exists(tempDirectory):
+            os.makedirs(tempDirectory)
+    
+    SettingTempDirectory = tempDirectory
+    print("Received parameters: fileWithJson %r, tempDirectory %r" % (fileWithJson, SettingTempDirectory))
+    load(None, None, fileWithJson)
     print('Finished')
