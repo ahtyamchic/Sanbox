@@ -100,11 +100,11 @@ def create_materials(data):
         ambientColor = m.get("ambientColor", None)    # ok        
         
         specularColor = m.get("specularColor", None)  # ok 
-        specularMap = m.get("specularMap", None)  #TODO ???
+        specularMap = m.get("specularMap", None)      # ok
         
-        shininess = m.get("shininess", 0.0)       # TODO probably is specular_intensity
-        alpha = m.get("transparency", 1.0)        # ok 
-        reflectivity = m.get("reflectivity", 0)   # ok??
+        shininess = m.get("shininess", 0.0)           # ok
+        alpha = m.get("transparency", 1.0)            # ok 
+        reflectivity = m.get("reflectivity", 0)       # ok??
         
         bumpMap = m.get("bumpMap", None)
         bumpScale = m.get("bumpScale", 1)          # TODO: ???
@@ -112,7 +112,7 @@ def create_materials(data):
         emissive = m.get("emissive", 0) # TODO not sure  
         
         material = bpy.data.materials.new(name)
-        material.use_vertex_color_light = False       
+        material.use_vertex_color_light = False    
         
         ### Parse data ###
         
@@ -133,7 +133,7 @@ def create_materials(data):
             material.specular_hardness = shininess
         
         if bumpMap:
-            material.specular_shader = 'BLINN'
+            material.specular_shader = 'PHONG'
             texture = create_texture(bumpMap, data, False)
             mtex = material.texture_slots.add()
             mtex.texture = texture
@@ -141,7 +141,7 @@ def create_materials(data):
             mtex.use = True
             mtex.bump_method = 'BUMP_BEST_QUALITY'
             mtex.bump_objectspace = 'BUMP_TEXTURESPACE'
-            mtex.mapping = 'FLAT' #????  
+            mtex.mapping = "CUBE"#'FLAT'
         
         if specularColor:
             setColor(material.specular_color, specularColor)
@@ -156,7 +156,7 @@ def create_materials(data):
             mtex.texture_coords = 'UV'
             mtex.use = True
             
-            mtex.mapping = 'FLAT'        
+            mtex.mapping = "CUBE"#'FLAT'        
             mtex.use_map_specular = True               
             
         if diffuseColor:
@@ -168,11 +168,12 @@ def create_materials(data):
             mtex.texture = texture
             mtex.texture_coords = 'UV'
             mtex.use = True
-            mtex.use_map_color_diffuse = True
-            mtex.mapping = 'FLAT'        
-            mtex.use_map_diffuse = True
             
-            #material.active_texture = texture
+            mtex.mapping = "FLAT"  
+            mtex.use_map_diffuse = True
+            mtex.use_map_color_diffuse = True
+            
+            material.active_texture = texture
 
         
         """I am not sure of the this """
@@ -187,7 +188,7 @@ def update_mesh_object(mesh):
         print("TEST before update me.tessfaces len", len(mesh.tessfaces))
         #mesh.update(calc_tessface = True)
         #mesh.update(calc_edges= True)
-        mesh.update(calc_edges= False, calc_tessface = True)
+        #mesh.update(calc_edges= False, calc_tessface = False)
         print("TEST me.tessfaces len", len(mesh.tessfaces))
         
 def create_mesh_object(name, vertices, materials, face_data, flipYZ, recalculate_normals, matrix, parrent):
@@ -201,7 +202,7 @@ def create_mesh_object(name, vertices, materials, face_data, flipYZ, recalculate
 
     # Create a new mesh
     me = bpy.data.meshes.new(name)
-    
+
     if not parrent:
         ob = bpy.data.objects.new(name, None)
     else :
@@ -231,7 +232,7 @@ def create_mesh_object(name, vertices, materials, face_data, flipYZ, recalculate
 
         for fi in range(len(faces)):
             #print("setting face %i with %i vertices" % (fi, len(normals[fi])))
-            me.tessfaces[fi].use_smooth = True
+            #me.tessfaces[fi].use_smooth = True
             if vertexNormals[fi]:
                 if not recalculate_normals:
                     for j in range(len(vertexNormals[fi])):
@@ -242,7 +243,11 @@ def create_mesh_object(name, vertices, materials, face_data, flipYZ, recalculate
                         vi = me.tessfaces[fi].vertices[j]
                         me.vertices[vi].normal.x = x
                         me.vertices[vi].normal.y = y
-                        me.vertices[vi].normal.z = z                
+                        me.vertices[vi].normal.z = z
+#                         me.tessfaces[fi].normal.x = x
+#                         me.tessfaces[fi].normal.y = y
+#                         me.tessfaces[fi].normal.z = z
+                                
 
     # Handle colors TODO:we have colors?
 
@@ -299,11 +304,9 @@ def create_mesh_object(name, vertices, materials, face_data, flipYZ, recalculate
         print("setting vertex uvs")
 
         for fi in range(len(faces)):
-
             me.tessface_uv_textures.new()
             uv_tess_tex = me.tessface_uv_textures[0]
             if vertexUVs[fi]:
-
                 uv_face = uv_tess_tex.data[fi] # we have only one layer
                 face_uvs = uv_face.uv1, uv_face.uv2, uv_face.uv3, uv_face.uv4
 
@@ -324,8 +327,6 @@ def create_mesh_object(name, vertices, materials, face_data, flipYZ, recalculate
     if face_data["hasMaterials"]:
         print("setting materials (mesh)")
 
-#         for m in materials:
-#             me.materials.append(m)
         addedMaterials = {}
         currentIndex = -1
         
@@ -346,7 +347,6 @@ def create_mesh_object(name, vertices, materials, face_data, flipYZ, recalculate
                     material_index = addedMaterials[face_index]
                             
                 me.tessfaces[fi].material_index = material_index
-                
     # Create a new object
     
     if recalculate_normals:
