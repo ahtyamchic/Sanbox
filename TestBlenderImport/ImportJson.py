@@ -187,7 +187,7 @@ def create_materials(data):
 
 def update_mesh_object(mesh):
         print("TEST before update me.tessfaces len", len(mesh.tessfaces))
-        #mesh.update(calc_tessface = True)
+        mesh.update(calc_tessface = True)
         #mesh.update(calc_edges= True)
         #mesh.update(calc_edges= False, calc_tessface = False)
         print("TEST me.tessfaces len", len(mesh.tessfaces))
@@ -738,7 +738,7 @@ def load_data(data,  option_flip_yz, recalculate_normals, option_worker):
     
     
     
-def load(operator, context, filepath, option_flip_yz = False, recalculate_normals = False, option_worker = False):
+def load(operator, context, filepath, option_flip_yz = False, recalculate_normals = True, option_worker = False):
 
     print('\nimporting %r' % filepath)
 
