@@ -1,7 +1,7 @@
 '''
 Created on 03 февр. 2015 г.
 
-@author: Mihail
+@author: Mihail A
 '''
 from argparse import ArgumentError
 

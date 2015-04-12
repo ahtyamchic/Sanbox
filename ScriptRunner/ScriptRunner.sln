@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptRunner", "ScriptRunner\ScriptRunner.csproj", "{A0BE469D-0911-4752-B08D-9762D5A745F7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlenderScriptRunner", "BlenderScriptRunner\BlenderScriptRunner.csproj", "{BCF64357-88D9-4C3A-8EA0-11FA0E6A46CC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A0BE469D-0911-4752-B08D-9762D5A745F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0BE469D-0911-4752-B08D-9762D5A745F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0BE469D-0911-4752-B08D-9762D5A745F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0BE469D-0911-4752-B08D-9762D5A745F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BCF64357-88D9-4C3A-8EA0-11FA0E6A46CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCF64357-88D9-4C3A-8EA0-11FA0E6A46CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BCF64357-88D9-4C3A-8EA0-11FA0E6A46CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BCF64357-88D9-4C3A-8EA0-11FA0E6A46CC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
