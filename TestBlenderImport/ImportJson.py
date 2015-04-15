@@ -537,21 +537,45 @@ def add_camera(camera_data, parent):
         cam_ob.parent = parent
     
     bpy.context.scene.objects.link(cam_ob)
-    
+# #####################################################
+# Lamps
+# #####################################################
 def add_some_lamp():
-    b_lamp1 = bpy.data.lamps.new('lamp1', type='POINT')
-    b_lamp1.energy = 18
+    # add lamp 1
+    lamp_name1 = 'lamp1'
+    b_lamp1 = bpy.data.lamps.new(lamp_name1, type='POINT')
+    b_lamp1.energy = 10
     b_lamp1.distance = 25
-    lamp_object = bpy.data.objects.new(name="lamp", object_data=b_lamp1)
+    
+    lamp_object = bpy.data.objects.new(name="lampObj1", object_data=b_lamp1)
     lamp_object.location = (3.55275, -29.70471, 23.00502)
     
-    b_lamp2 = bpy.data.lamps.new('lamp2', type='POINT')
-    b_lamp2.energy = 18
+    # add lamp2
+    lamp_name2 = 'lamp2'
+    b_lamp2 = bpy.data.lamps.new(lamp_name2, type='POINT')
+    b_lamp2.energy = 10
     b_lamp2.distance = 25
-    lamp_object2 = bpy.data.objects.new(name="lamp", object_data=b_lamp2)
+    lamp_object2 = bpy.data.objects.new(name="lampObj2", object_data=b_lamp2)
     lamp_object2.location = (28.89529, -29.42309, 20.58965)
+    
     bpy.context.scene.objects.link(lamp_object)
     bpy.context.scene.objects.link(lamp_object2)
+    # add effects
+    bpy.data.scenes["Scene"].render.resolution_percentage = 100 # is it 100% ???
+    bpy.data.lamps[lamp_name1].shadow_method = 'RAY_SHADOW'
+    bpy.data.lamps[lamp_name1].shadow_color = (0.5, 0.5, 0.5)
+    
+    bpy.data.lamps[lamp_name2].shadow_method = 'RAY_SHADOW'
+    bpy.data.lamps[lamp_name2].shadow_color = (0.5, 0.5, 0.5)
+    
+    # add hemi lamp
+    lamp_name3 = 'lamp_hemi'
+    b_lamp3 = bpy.data.lamps.new(lamp_name3, type='HEMI')
+    b_lamp3.use_specular = True
+    b_lamp3.use_diffuse = False
+    lamp_object3 = bpy.data.objects.new(name="lampObj3", object_data=b_lamp3)
+    bpy.context.scene.objects.link(lamp_object3)
+    lamp_object3.location = (17.68765, -17.55407, 25.34146)
     
 # #####################################################
 # Utils
