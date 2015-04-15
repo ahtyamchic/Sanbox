@@ -57,15 +57,15 @@ namespace ScriptRunner
 
         private void BlenderBrowseButton_Click(object sender, EventArgs e)
         {
-            SelectFile("Select Blender.exe", BlenderDirTextBox, BlendeLabel);
+            SelectFile("Select blender.exe", BlenderDirTextBox, BlendeLabel, "Application files(.exe)|*.exe");
             AllowRunScript();
         }
 
-        private void SelectFile(string selectFile, TextBox textBox, Label label)
+        private void SelectFile(string selectFile, TextBox textBox, Label label, string filter = null)
         {
             var dialog = new OpenFileDialog();
             dialog.Title = selectFile;
-
+            dialog.Filter = filter;
             if (dialog.ShowDialog() == DialogResult.OK && File.Exists(dialog.FileName))
             {
                 string fileName = dialog.FileName;
@@ -76,7 +76,7 @@ namespace ScriptRunner
 
         private void JsonButton_Click(object sender, EventArgs e)
         {
-            SelectFile("Select json file", JsonTextBox, JsonLabel);
+            SelectFile("Select json file", JsonTextBox, JsonLabel, "Json files(.json)|*.json");
             AllowRunScript();
         }
 
@@ -100,7 +100,14 @@ namespace ScriptRunner
 
         private void RunButton_Click(object sender, EventArgs e)
         {
-            _runner.Run(_cfg);
+            try
+            {
+                _runner.Run(_cfg);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Unexpected error occured. \n Details:" + ex, "Oops", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }
