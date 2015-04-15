@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 
 namespace BlenderScriptRunner
 {
@@ -10,7 +11,7 @@ namespace BlenderScriptRunner
         {
             string blenderLocation = string.IsNullOrEmpty(cfg.BlenderPath) ? _defaulBlenderLocation : cfg.BlenderPath;
 
-            string cmdArg = string.Format(_blenderCmdArgPattern, "EmptyScene.blend", "importJson.py", cfg.JsonPath, cfg.TempPath);
+            string cmdArg = string.Format(_blenderCmdArgPattern, "EmptyScene.blend", "importJson.py", cfg.JsonPath, string.Format("{0}\\", cfg.TempPath));
             Process.Start(blenderLocation, cmdArg);
         }
 
