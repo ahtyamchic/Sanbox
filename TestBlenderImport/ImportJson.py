@@ -103,14 +103,14 @@ def create_materials(data):
         specularColor = m.get("specularColor", None)  # ok 
         specularMap = m.get("specularMap", None)      # ok
         
-        shininess = m.get("shininess", 0.0)           # ok
+        shininess = m.get("shininess", 0.0)           #not ok should be [0,1] material.specular_intensity = 1.0 ??
         alpha = m.get("transparency", 1.0)            # ok 
-        reflectivity = m.get("reflectivity", 0)       # ok??
+        reflectivity = m.get("reflectivity", 0)       # ok
         
         bumpMap = m.get("bumpMap", None)
         bumpScale = m.get("bumpScale", 1)          # TODO: ???
          
-        emissive = m.get("emissive", 0) # TODO not sure  
+        emissive = m.get("emissive", 0) # not sure
         
         material = bpy.data.materials.new(name)
         material.use_vertex_color_light = False    
@@ -146,8 +146,8 @@ def create_materials(data):
         
         if specularColor:
             setColor(material.specular_color, specularColor)
-            material.specular_intensity = 1.0 
-            material.specular_shader = 'COOKTORR'    
+            #material.specular_intensity = 1.0 
+            material.specular_shader = 'WARDISO'#'COOKTORR'    
         
         if specularMap:
             material.specular_shader = 'PHONG'
@@ -178,8 +178,8 @@ def create_materials(data):
 
         
         """I am not sure of the this """
-        if emissive < 1.0:
-            material.emit = emissive
+#         if emissive < 1.0:
+#             material.emit = emissive
           
         materials.append(material)
 
@@ -514,9 +514,10 @@ def add_camera(camera_data, parent):
     nearClipDistance = camera_data.get("near",0)  
     farClipDistance  = camera_data.get("far",0)
     aspectRatio = camera_data.get("aspectRatio",0)
-    fieldOfViewInDegrees = camera_data.get("fov", 0)
+    fieldOfViewInDegrees = camera_data.get("fov", 0.0)
     matrix_data = camera_data.get("matrix", [])
-
+    
+    print("TESt fieldOfViewInDegrees: ", fieldOfViewInDegrees)
     cam = bpy.data.cameras.new("Camera")
     
     cam.type = 'PERSP'    
@@ -582,7 +583,7 @@ def add_some_lamp():
 # #####################################################
 
 def convert_degrees_to_rad( degrees ):
-    return math.pi * degrees / 180.0
+    return math.pi * 50 / 180.0
 
 def hexToTuple( hexColor ):
     r = (( hexColor >> 16 ) & 0xff) / 255.0
