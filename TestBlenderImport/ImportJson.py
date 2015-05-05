@@ -47,13 +47,14 @@ def load_remote_image(url):
     return img
     
 def setColor(c, cInHex):
+    gamma_cof = 2.2 # TODO: very very bad to use cons for gamma correction but i don't know how to do it automatically
     rgbArr = hexToTuple(cInHex)
-    c.r = rgbArr[0]
-    c.g = rgbArr[1]
-    c.b = rgbArr[2]
+    c.r = rgbArr[0] ** gamma_cof
+    c.g = rgbArr[1] ** gamma_cof
+    c.b = rgbArr[2] ** gamma_cof
 
-def create_texture(textureName, data, isLocalImage = True):
-    name = textureName
+def create_texture(textureName, data, isLocalImage = True, nameSuffix=''):
+    name = textureName + nameSuffix
     texture = bpy.data.textures.new(name, type='IMAGE')
 
     textures_data = data.get("textures", [])
@@ -128,58 +129,64 @@ def create_materials(data):
         if alpha < 1.0:
             material.alpha = alpha
             material.use_transparency = True
-           
-        """I am not sure of the this """
-        if shininess:            
-            material.specular_hardness = shininess
         
         if bumpMap:
             material.specular_shader = 'PHONG'
-            texture = create_texture(bumpMap, data, False)
+            texture = create_texture(bumpMap, data, False, 'bump')
             mtex = material.texture_slots.add()
             mtex.texture = texture
             mtex.texture_coords = 'UV'
             mtex.use = True
             mtex.bump_method = 'BUMP_BEST_QUALITY'
-            mtex.bump_objectspace = 'BUMP_TEXTURESPACE'
-            mtex.mapping = "CUBE"#'FLAT'
+            mtex.bump_objectspace = 'BUMP_VIEWSPACE'
+            mtex.mapping = 'FLAT'#"CUBE"
+            
+            mtex.use_map_normal = True
+            mtex.normal_factor = bumpScale
+            mtex.use_map_color_diffuse = True##????
         
         if specularColor:
             setColor(material.specular_color, specularColor)
-            #material.specular_intensity = 1.0 
-            material.specular_shader = 'WARDISO'#'COOKTORR'    
+            material.specular_intensity = 1.0 
+            material.specular_shader = 'WARDISO' #'COOKTORR'
+            """should be ok. I got it from import collada script """
+            if shininess:
+                material.specular_hardness = shininess # range[0:511]
         
         if specularMap:
             material.specular_shader = 'PHONG'
-            texture = create_texture(specularMap, data, False)
+            texture = create_texture(specularMap, data, False, 'spec')
             mtex = material.texture_slots.add()
             mtex.texture = texture
             mtex.texture_coords = 'UV'
             mtex.use = True
             
             mtex.mapping = "CUBE"#'FLAT'        
-            mtex.use_map_specular = True               
+            mtex.use_map_specular = True         
             
         if diffuseColor:
             setColor(material.diffuse_color, diffuseColor)
+            material.diffuse_shader = 'LAMBERT'
+            
         if diffuseMap:
             material.diffuse_shader = 'LAMBERT'
-            texture = create_texture(diffuseMap, data, False)
+            texture = create_texture(diffuseMap, data, False, 'diffuse')
             mtex = material.texture_slots.add()
             mtex.texture = texture
             mtex.texture_coords = 'UV'
             mtex.use = True
             
             mtex.mapping = "FLAT"  
+            mtex.bump_objectspace = 'BUMP_VIEWSPACE'
             mtex.use_map_diffuse = True
             mtex.use_map_color_diffuse = True
             
-            material.active_texture = texture
+            #material.active_texture = texture
 
         
         """I am not sure of the this """
-#         if emissive < 1.0:
-#             material.emit = emissive
+        if emissive < 1.0:
+            material.emit = emissive
           
         materials.append(material)
 
@@ -521,9 +528,15 @@ def add_camera(camera_data, parent):
     cam = bpy.data.cameras.new("Camera")
     
     cam.type = 'PERSP'    
+   '''
     cam.angle =convert_degrees_to_rad(fieldOfViewInDegrees)
-    
     cam.lens_unit = 'FOV'
+    
+    According to request set focal length to 20 mm 
+    '''
+    cam.lens_unit = 'MILLIMETERS'
+    cam.lens = 20
+    
     cam['Ratio'] = aspectRatio #  does not work probably
     
     print("TEST CAMERA FOV %r" % (fieldOfViewInDegrees))
@@ -583,7 +596,12 @@ def add_some_lamp():
 # #####################################################
 
 def convert_degrees_to_rad( degrees ):
-    return math.pi * 50 / 180.0
+    degrees_float = float(degrees)
+    return math.pi * degrees_float / 180.0
+
+def getConstFocalLenhth():
+    degrees_float = float(degrees)
+    return math.pi * degrees_float / 180.0
 
 def hexToTuple( hexColor ):
     r = (( hexColor >> 16 ) & 0xff) / 255.0
@@ -791,12 +809,12 @@ def load(operator, context, filepath, option_flip_yz = False, recalculate_normal
     time_sub = time_new
 
     load_data(data, option_flip_yz, recalculate_normals, option_worker)
+
     
     add_some_lamp()
     
     scene = bpy.context.scene
     scene.update()
-
     time_new = time.time()
 
     print('finished importing: %r in %.4f sec.' % (filepath, (time_new - time_main)))
