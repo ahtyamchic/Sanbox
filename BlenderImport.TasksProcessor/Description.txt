@@ -1,0 +1,15 @@
+1) Получить задачи для обработки со статусом new via rest api 1
+2) Берем задачу new rest api 2
+3) Render
+    a) Get json for rendering
+	b) Import json via the script
+	c) Render a scene
+	d) Save result to a file with picture
+4) Upload the picture via rest api 3
+  a) get picture and convert to string base 64
+  b) upload
+
+UI
+1) Start, stop
+2) Logging/Monitoring of the current tasks processing
+3) Hide the application to the tray
