@@ -43,7 +43,11 @@ namespace TaskRender.TasksProcessor
                 var renderTask = _apiClient.GetRenderTask(id);
 
                 var imageAsBytes = RenderTask(renderTask).Result;
-                var imageAsBase64 = _convertor.Convert(new MemoryStream(imageAsBytes));
+                string imageAsBase64;
+                using (var ms = new MemoryStream(imageAsBytes))
+                {
+                    imageAsBase64 = _convertor.Convert(ms); 
+                }
 
                 _apiClient.UpdateRenderTask(id, imageAsBase64);
             }
@@ -56,12 +60,14 @@ namespace TaskRender.TasksProcessor
             await _blenderClient.ImportAsync(renderTask);
             await _blenderClient.RenderAsync();
 
-            var image = _blenderClient.GetRenderedResult();
-            var buff = new byte[image.Length];
-            await image.ReadAsync(buff, buff.Length, 0);
-            _blenderClient.Clear();
+            using (var image = _blenderClient.GetRenderedResult())
+            {
+                var buff = new byte[image.Length];
+                await image.ReadAsync(buff, buff.Length, 0);
+                _blenderClient.Clear();
 
-            return buff;
+                return buff; 
+            }
         }
 
         public void Start()
